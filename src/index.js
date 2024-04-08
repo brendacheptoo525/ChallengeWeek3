@@ -1,18 +1,18 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Define the URL of the database
-    const databaseUrl = "db.json";
+    // Define the URL of the server endpoint
+    const serverUrl = "http://localhost:3000/films";
 
-    // Fetch data from the database URL
-    fetchData(databaseUrl)
-      .then((data) => {
-        // Extract the list of movies from the fetched data
-        const movieList = data.films;
-        // Display details of the first movie in the list
-        displayMovieDetails(movieList[0]);
-        // Display the movie menu based on the list of movies
-        displayMovieMenu(movieList);
-      })
-      .catch((error) => console.error("Error fetching data:", error));
+    // Fetch data from the server
+    fetchData(serverUrl)
+        .then((data) => {
+            // Extract the list of movies from the fetched data
+            const movieList = data;
+            // Display details of the first movie in the list
+            displayMovieDetails(movieList[0]);
+            // Display the movie menu based on the list of movies
+            displayMovieMenu(movieList);
+        })
+        .catch((error) => console.error("Error fetching data:", error));
 
     // Function to fetch data asynchronously from the specified URL
     async function fetchData(url) {
@@ -57,7 +57,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 movie.tickets_sold++;
                 displayMovieDetails(movie);
                 updateTicketSoldOnServer(movie.id, movie.tickets_sold);
-                purchaseTicket(movie.id);
             }
         });
     }
@@ -80,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const listItemElement = document.createElement("li");
         listItemElement.classList.add("film", "item");
         listItemElement.textContent = movie.title;
-        
+
         // Add event listener to list item for displaying movie details
         listItemElement.addEventListener("click", function () {
             displayMovieDetails(movie);
@@ -94,7 +93,7 @@ document.addEventListener("DOMContentLoaded", function () {
             event.stopPropagation();
             // Remove the list item from the movie list
             listItemElement.parentNode.removeChild(listItemElement);
-            // Call function to delete the movie
+            // Call function to delete the movie from the server
             deleteMovie(movie.id);
         });
 
@@ -106,16 +105,62 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Function to update the number of tickets sold on the server
     function updateTicketSoldOnServer(movieId, ticketsSold) {
-        console.log("Updating tickets_sold for movie ID:", movieId, "to", ticketsSold);
+        // Send a PATCH request to update tickets_sold on the server
+        fetch(`${serverUrl}/${movieId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tickets_sold: ticketsSold
+            }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to update tickets sold on the server');
+            }
+            console.log(`Tickets sold for movie ID ${movieId} updated successfully`);
+        })
+        .catch(error => {
+            console.error('Error updating tickets sold on the server:', error);
+        });
     }
 
-    // Placeholder function for purchasing tickets
-    function purchaseTicket(movieId) {
-        // Implement purchase functionality if needed
-    }
-
-    // Placeholder function for deleting a movie
+    // Function to delete a movie from the server
     function deleteMovie(movieId) {
-        // Implement delete functionality if needed
+        // Send a DELETE request to delete the movie from the server
+        fetch(`${serverUrl}/${movieId}`, {
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to delete the movie from the server');
+            }
+            console.log(`Movie with ID ${movieId} deleted successfully`);
+        })
+        .catch(error => {
+            console.error('Error deleting movie from the server:', error);
+        });
+    }
+
+    // Function to add a new movie to the server
+    function addNewMovie(movieData) {
+        // Send a POST request to add the new movie to the server
+        fetch(serverUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(movieData),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to add new movie to the server');
+            }
+            console.log('New movie added successfully');
+        })
+        .catch(error => {
+            console.error('Error adding new movie to the server:', error);
+        });
     }
 });
